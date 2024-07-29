@@ -1,7 +1,8 @@
-(* issues: use a while mechanism to print individual lines?; hyphenation *)
+(* issues: usage notes; hyphenation *)
 
-use "./src/trie.sml";
-
+(* use "./src/trie.sml"; *)
+structure Main = 
+struct
 (* lower : string -> string *)
 fun lower str = implode(map Char.toLower (explode str));
 fun stringList str = String.tokens Char.isSpace str
@@ -52,16 +53,17 @@ fun typo dict word = let
 fun typos dict words =  map (typo dict) (map removePunct words);
 fun getErrors dict words = List.filter (fn x => not (x = "") ) (typos dict words);
 
+fun outPhrase wordList = map (fn x => "\""^x^"\""^" appears to be a typo.\n") wordList
+
 (* we should handle if the input file doesn't exist before loading the dictionary *)
-val dictionary = createTrie(openFile "./dict/words.txt");
-
-val final = getErrors dictionary (openFile "./src/test.txt");
-
-fun printTypos wordList : unit = let
-  val len = (length wordList)
-  val counter = ref 0
+fun main(arg0, argv) = (
+  let 
+    val dictionary = createTrie(openFile "./dict/words.txt")
+    val final = getErrors dictionary (openFile "./src/test.txt")
   in
-    while (!counter < len ) do (
-      print(List.nth(wordList, !counter)^"\n");
-      counter := !counter + 1)
+    app (fn x => print x) (outPhrase final)
   end;
+  OS.Process.success
+)
+val _ = SMLofNJ.exportFn("spell", main)
+end

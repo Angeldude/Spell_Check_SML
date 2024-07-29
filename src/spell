@@ -1,0 +1,5 @@
+heap=`basename $0`
+install=.
+smlbin=/home/angel/smlnj/bin
+
+exec $smlbin/.run-sml @SMLload=$install/${heap}.amd64-linux "$@"
