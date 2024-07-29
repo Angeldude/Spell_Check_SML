@@ -8,7 +8,7 @@ class TrieNode
     end
 
     def sub_node(character)
-        @child.each{ |c| return c if c.data == character  } if !@child.empty?
+        @child.each{ |c| return c if c.data.downcase == character.downcase  } if !@child.empty?
         nil
     end
 end
@@ -54,12 +54,12 @@ dict = Trie.new
 
 def get_dictionary(file,trie)
     File.foreach(file).each do |word|
-        trie.insert word.tr("\n", "").downcase
+        trie.insert word.tr("\n", "")
     end
 end
 
 def typos(words, trie)
-    words.split.reject{|word| trie.search(word.downcase)}
+    words.split.reject{|word| trie.search(word)}
 end
 
 sample = "Here is some test material still not going to try with punctuation though"

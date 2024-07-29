@@ -1,18 +1,55 @@
-(* input: string *)
-(* match string with path to file; read its contents and store in var *)
-(* issues: use a while mechanism to print individual lines?; punctuation; hyphenation *)
+(* issues: use a while mechanism to print individual lines?; hyphenation *)
 
-val contents: string = "Flower";
-(* The dictionary part is being re-written to use a Trie *)
-fun words (str: string): string list = String.tokens Char.isSpace str;
-fun lower (str: string): string = implode(map Char.toLower (explode str));
-fun typo (x: string) = List.exists (fn word => (lower x) = (lower word)) dictionary;
+use "./src/trie.sml";
+(* lower : string -> string *)
+fun lower str = implode(map Char.toLower (explode str));
 
-fun typos (x: string) = if typo(x) then "" else x;
-fun errors (content: string list) = map typos content;
-fun get_typos (ls: string list): string list = 
-	if List.all (fn x => x = "") ls 
-	then []
-	else List.filter (fn x => not (x = "")) ls;
+(* createTrie : string list -> bool dict *)
+fun createTrie [] = Trie.empty
+ | createTrie (x::xs) = Trie.insert(createTrie(xs) , (x, true)) 
 
-(* get_typos(errors (words contents)) *)
+fun checkPunct (word: string) = 
+  let 
+    val worded = explode word
+    val punctuation = List.nth(worded, (length worded)-1)
+  in 
+    Char.isPunct punctuation
+  end;
+
+fun openFile (file:string) = 
+    let
+	  val file = TextIO.openIn file
+	  val words = String.tokens Char.isSpace (TextIO.inputAll file)
+	in
+	  words before TextIO.closeIn file
+	end;
+
+fun removePunct word = 
+  let
+    val chars = explode word
+    val fixedWord = 
+      if checkPunct word 
+      then implode(List.take(chars, (length chars)-1))
+      else word
+  in
+    fixedWord
+  end;
+
+fun typo dict word = let
+  val normal = Trie.lookup dict word
+  val lowered = Trie.lookup dict (lower word)
+  fun caseCheck temp : bool = 
+    case temp of 
+      SOME x => x
+    | NONE => false
+  val result = caseCheck(normal) orelse caseCheck(lowered)
+  in
+    if not result then word else ""
+  end;
+  
+
+(* we should handle if the input file doesn't exist before loading the dictionary *)
+val words = openFile "./src/test.txt";
+val dictionary = createTrie(openFile "./dict/words.txt");
+
+val final = List.filter (fn x => not (x = "") ) (map (typo dictionary) (map removePunct words));
